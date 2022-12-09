@@ -1,35 +1,47 @@
 import { readFile } from 'fs/promises';
 import { EOL } from 'os';
 
-type StepDirection = 'U' | 'D' | 'L' | 'R';
+type InputStepDirection = 'U' | 'D' | 'L' | 'R';
+type DirectionArrow = keyof typeof directions;
 type Point = [number, number];
 
-const headMovements = (await readFile('input.txt'))
+const inputToArrow: Record<InputStepDirection, DirectionArrow> = { 
+    'L': '🡸', 
+    'R': '🡺', 
+    'U': '🡹', 
+    'D': '🡻' 
+};
+
+const directions = {
+    '🡼': [-1,  1] as Point,
+    '🡸': [-1,  0] as Point,
+    '🡿': [-1, -1] as Point,
+    '🡹': [ 0,  1] as Point,
+    '  ': [ 0,  0] as Point,
+    '🡻': [ 0, -1] as Point,
+    '🡽': [ 1,  1] as Point,
+    '🡺': [ 1,  0] as Point,
+    '🡾': [ 1, -1] as Point
+};
+
+const headMovementsVectors = (await readFile('input.txt'))
         .toString()
         .split(EOL)
         .map(row => /(?<direction>[U|D|L|R]) (?<steps>\d+)/g.exec(row)!.groups!)
-        .map(({ direction, steps }) => ({ direction: direction as StepDirection, steps: parseInt(steps) }))
-        .flatMap(movement => Array<StepDirection>(movement.steps).fill(movement.direction));
+        .map(({ direction, steps }) => ({ direction: direction as InputStepDirection, steps: parseInt(steps) }))
+        .flatMap(movement => Array<InputStepDirection>(movement.steps).fill(movement.direction))
+        .map(movement => inputToArrow[movement])
+        .map(arrow => directions[arrow]);
 
-const directions: {[dir: string]: Point} = {
-    '🡼': [-1,  1],
-    '🡸': [-1,  0],
-    '🡿': [-1, -1],
-    '🡹': [ 0,  1],
-    '  ': [ 0,  0],
-    '🡻': [ 0, -1],
-    '🡽': [ 1,  1],
-    '🡺': [ 1,  0],
-    '🡾': [ 1, -1]
-};
-
-const stencil: (keyof typeof directions)[][] = [
+let stencil: DirectionArrow[][] = [
     [ '🡼', '🡼', '🡹', '🡽', '🡽' ],
     [ '🡼', '  ', '  ', '  ', '🡽' ],
     [ '🡸', '  ', '  ', '  ', '🡺' ],
     [ '🡿', '  ', '  ', '  ', '🡾' ],
     [ '🡿', '🡿', '🡻', '🡾', '🡾' ]
-].reverse();
+];
+
+stencil = stencil.reverse();
 
 function processRopeLink([ prevX, prevY ]: Point, [ x, y ]: Point): Point {
     const dx = (prevX - x);
@@ -43,25 +55,18 @@ function processRopeLink([ prevX, prevY ]: Point, [ x, y ]: Point): Point {
 function simulateRope(length: number) {
     const rope = Array<Point>(length).fill([0, 0]);
 
-    const headMovementVectors: Record<StepDirection, (p: Point) => Point> = {
-        'D': ([x, y]) => [x     , y - 1],
-        'U': ([x, y]) => [x     , y + 1],
-        'L': ([x, y]) => [x - 1 , y    ],
-        'R': ([x, y]) => [x + 1 , y    ]
-    }
-
     const visitedByTail = new Set<String>();
-
     function recordTailPosition() {
         visitedByTail.add(JSON.stringify(rope[rope.length - 1]));
     }
 
     recordTailPosition();
 
-    headMovements.forEach(headMovement => {
+    headMovementsVectors.forEach(([dx, dy]) => {
 
         // move head
-        rope[0] = headMovementVectors[headMovement](rope[0]);
+        const [ headX, headY ] = rope[0];
+        rope[0] = [ headX + dx, headY + dy ];
 
         for(let linkIndex = 0; linkIndex < rope.length - 1; linkIndex++) {
             rope[linkIndex + 1] = processRopeLink(rope[linkIndex], rope[linkIndex + 1]);
