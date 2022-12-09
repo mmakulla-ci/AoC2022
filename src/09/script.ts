@@ -4,10 +4,6 @@ import { EOL } from 'os';
 type StepDirection = 'U' | 'D' | 'L' | 'R';
 type Point = [number, number];
 
-function distance([ p1, p2 ]: Point, [ q1, q2 ]: Point): number {
-    return Math.sqrt(((q1 - p1) ** 2) + ((q2 - p2) ** 2));
-}
-
 const headMovements = (await readFile('input.txt'))
         .toString()
         .split(EOL)
@@ -15,47 +11,70 @@ const headMovements = (await readFile('input.txt'))
         .map(({ direction, steps }) => ({ direction: direction as StepDirection, steps: parseInt(steps) }))
         .flatMap(movement => Array<StepDirection>(movement.steps).fill(movement.direction));
 
-const movementVectors: Record<StepDirection, (p: Point) => Point> = {
-    'D': ([x, y]) => [x     , y - 1],
-    'U': ([x, y]) => [x     , y + 1],
-    'L': ([x, y]) => [x - 1 , y    ],
-    'R': ([x, y]) => [x + 1 , y    ]
-}
+const directions: {[dir: string]: Point} = {
+    '🡼': [-1,  1],
+    '🡸': [-1,  0],
+    '🡿': [-1, -1],
+    '🡹': [ 0,  1],
+    '  ': [ 0,  0],
+    '🡻': [ 0, -1],
+    '🡽': [ 1,  1],
+    '🡺': [ 1,  0],
+    '🡾': [ 1, -1]
+};
 
-let headPosition: Point = [0, 0];
-let tailPosition: Point = [0, 0];
+const stencil: (keyof typeof directions)[][] = [
+    [ '🡼', '🡼', '🡹', '🡽', '🡽' ],
+    [ '🡼', '  ', '  ', '  ', '🡽' ],
+    [ '🡸', '  ', '  ', '  ', '🡺' ],
+    [ '🡿', '  ', '  ', '  ', '🡾' ],
+    [ '🡿', '🡿', '🡻', '🡾', '🡾' ]
+].reverse();
 
-const visitedByTail = new Set<String>();
-function recordTailPosition() {
-    visitedByTail.add(JSON.stringify(tailPosition));
-}
-
-recordTailPosition();
-
-headMovements.forEach(movement => {
-    headPosition = movementVectors[movement](headPosition);
-    const tailDistance = distance(tailPosition, headPosition);
+function processRopeLink([ prevX, prevY ]: Point, [ x, y ]: Point): Point {
+    const dx = (prevX - x);
+    const dy = (prevY - y);
     
-    // must move tail
-    if(tailDistance >= 2) {
+    const [ shiftX, shiftY ] = directions[stencil[dy + 2][dx + 2]];
 
-        // always mimic the movement of the head
-        // works for cardinal and diagonal movements
-        tailPosition = movementVectors[movement](tailPosition);
+    return [x + shiftX, y + shiftY];
+}
 
-        // diagonal movement
-        if(!Number.isInteger(tailDistance)) {
-            if(movement === 'D' || movement === 'U') {
-                tailPosition = [ headPosition[0], tailPosition[1] ];
-            } else {
-                tailPosition = [ tailPosition[0], headPosition[1] ];
-            }
-        }
+function simulateRope(length: number) {
+    const rope = Array<Point>(length).fill([0, 0]);
+
+    const headMovementVectors: Record<StepDirection, (p: Point) => Point> = {
+        'D': ([x, y]) => [x     , y - 1],
+        'U': ([x, y]) => [x     , y + 1],
+        'L': ([x, y]) => [x - 1 , y    ],
+        'R': ([x, y]) => [x + 1 , y    ]
+    }
+
+    const visitedByTail = new Set<String>();
+
+    function recordTailPosition() {
+        visitedByTail.add(JSON.stringify(rope[rope.length - 1]));
     }
 
     recordTailPosition();
-});
+
+    headMovements.forEach(headMovement => {
+
+        // move head
+        rope[0] = headMovementVectors[headMovement](rope[0]);
+
+        for(let linkIndex = 0; linkIndex < rope.length - 1; linkIndex++) {
+            rope[linkIndex + 1] = processRopeLink(rope[linkIndex], rope[linkIndex + 1]);
+        }
+
+        recordTailPosition();
+    });
+
+    return visitedByTail.size;
+}
 
 // --- Part 1 ---
+console.log('Part 1:', simulateRope(2));
 
-console.log('Part 1:', visitedByTail.size);
+// --- Part 2 ---
+console.log('Part 2:', simulateRope(10));
