@@ -33,7 +33,7 @@ const headMovementsVectors = (await readFile('input.txt'))
         .map(movement => inputToArrow[movement])
         .map(arrow => directions[arrow]);
 
-let stencil: DirectionArrow[][] = [
+const stencil: DirectionArrow[][] = [
     [ '🡼', '🡼', '🡹', '🡽', '🡽' ],
     [ '🡼', '  ', '  ', '  ', '🡽' ],
     [ '🡸', '  ', '  ', '  ', '🡺' ],
