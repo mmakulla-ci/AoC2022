@@ -13,15 +13,15 @@ const inputToArrow: Record<InputStepDirection, DirectionArrow> = {
 };
 
 const directions = {
-    '🡼': [-1,  1] as Point,
+    '🡼': [-1, -1] as Point,
     '🡸': [-1,  0] as Point,
-    '🡿': [-1, -1] as Point,
-    '🡹': [ 0,  1] as Point,
+    '🡿': [-1,  1] as Point,
+    '🡹': [ 0, -1] as Point,
     '  ': [ 0,  0] as Point,
-    '🡻': [ 0, -1] as Point,
-    '🡽': [ 1,  1] as Point,
+    '🡻': [ 0,  1] as Point,
+    '🡽': [ 1, -1] as Point,
     '🡺': [ 1,  0] as Point,
-    '🡾': [ 1, -1] as Point
+    '🡾': [ 1,  1] as Point
 };
 
 const headMovementsVectors = (await readFile('input.txt'))
@@ -40,8 +40,6 @@ let stencil: DirectionArrow[][] = [
     [ '🡿', '  ', '  ', '  ', '🡾' ],
     [ '🡿', '🡿', '🡻', '🡾', '🡾' ]
 ];
-
-stencil = stencil.reverse();
 
 function processRopeLink([ prevX, prevY ]: Point, [ x, y ]: Point): Point {
     const dx = (prevX - x);
