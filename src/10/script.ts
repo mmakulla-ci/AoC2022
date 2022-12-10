@@ -20,7 +20,7 @@ function doCycle(state: ProgramState): ProgramState {
 
     const currentCrtRow = characters.at(-1)!;
     const crtRowCharacterIndex = currentCrtRow.length;
-    const nextCrtCharacter = crtRowCharacterIndex >= xRegister - 1 && crtRowCharacterIndex <= xRegister + 1 ? '#' : '.';
+    const nextCrtCharacter = crtRowCharacterIndex >= xRegister - 1 && crtRowCharacterIndex <= xRegister + 1 ? '#' : ' ';
     currentCrtRow.push(nextCrtCharacter);
 
     if(cycleNumber % 40 === 0) {
