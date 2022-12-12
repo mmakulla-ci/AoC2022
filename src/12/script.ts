@@ -59,7 +59,6 @@ while(remainingCells.size > 0) {
                 distances.set(neighbor, alternativeDistance);
                 predecessors.set(neighbor, currentCell);
             }
-            
         });
 }
 
@@ -74,9 +73,7 @@ console.log('Part 1:', shortestPathLength([startCellPart1]));
 // --- Part 2 ---
 console.log('Part 2:', shortestPathLength(allCells.filter(cell => cell.heightChar === 'a')));
 
-
-
-// --- Render ---
+// --- Render Part 1 ---
 const path = new Set<HeightMapCell>;
 let currentCell: HeightMapCell | null = startCellPart1;
 if(predecessors.has(currentCell) || currentCell === endCell) {
@@ -105,7 +102,6 @@ for(let cellY = 0; cellY < heightMap.length; cellY++) {
                 image.setPixelColor(cellColor, cellImageX, cellImageY);
             }                    
         }
-
     }   
 }
 
