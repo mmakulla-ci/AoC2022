@@ -6,7 +6,7 @@ function areInRightOrder(left: any, right: any): boolean | null {
         const leftValue = left.at(0);
         const rightValue = right.at(0);
 
-        if(leftValue === undefined && rightValue === undefined) {
+        if(leftValue === rightValue) {
             return null;
         }
 
@@ -18,13 +18,7 @@ function areInRightOrder(left: any, right: any): boolean | null {
             return false;
         }
 
-        const firstValueResult = areInRightOrder(leftValue, rightValue);
-
-        if(firstValueResult !== null) {
-            return firstValueResult;
-        }
-
-        return areInRightOrder(left.slice(1), right.slice(1));
+        return areInRightOrder(leftValue, rightValue) ?? areInRightOrder(left.slice(1), right.slice(1));
     }
 
     if(Array.isArray(left) && !Array.isArray(right)) {
@@ -38,6 +32,7 @@ function areInRightOrder(left: any, right: any): boolean | null {
     return left < right ? true : left > right ? false : null;
 }
 
+// --- Part 1 ---
 const part1 = (await readFile('input.txt'))
         .toString()
         .split(EOL + EOL)
@@ -47,8 +42,10 @@ const part1 = (await readFile('input.txt'))
 
 console.log('Part 1:', part1);
 
+// --- Part 2 ---
 const divider1 = [[2]];
 const divider2 = [[6]];
+
 const part2 = (await readFile('input.txt'))
         .toString()
         .split(EOL)
