@@ -3,22 +3,22 @@ import { EOL } from 'os';
 
 function areInRightOrder(left: any, right: any): boolean | null {
     if(Array.isArray(left) && Array.isArray(right)) {
-        const leftValue = left.at(0);
-        const rightValue = right.at(0);
+        const leftFirstValue = left.at(0);
+        const rightFirstValue = right.at(0);
 
-        if(leftValue === undefined && rightValue === undefined) {
-            return null;
+        if(leftFirstValue === undefined && rightFirstValue === undefined) {
+            return null; // both arrays empty
         }
 
-        if(leftValue === undefined && rightValue !== undefined) {
-            return true;
+        if(leftFirstValue === undefined) {
+            return true; // only left array empty
         }
 
-        if(leftValue !== undefined && rightValue === undefined) {
-            return false;
+        if(rightFirstValue === undefined) {
+            return false; // only right array empty
         }
 
-        return areInRightOrder(leftValue, rightValue) ?? areInRightOrder(left.slice(1), right.slice(1));
+        return areInRightOrder(leftFirstValue, rightFirstValue) ?? areInRightOrder(left.slice(1), right.slice(1));
     }
 
     if(Array.isArray(left) && !Array.isArray(right)) {
