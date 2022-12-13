@@ -6,7 +6,7 @@ function areInRightOrder(left: any, right: any): boolean | null {
         const leftValue = left.at(0);
         const rightValue = right.at(0);
 
-        if(leftValue === rightValue) {
+        if(leftValue === undefined && rightValue === undefined) {
             return null;
         }
 
