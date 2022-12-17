@@ -42,22 +42,15 @@ const directions = (await readFile('input.txt'))
 const chamberWidth = 7;
 
 function runSimulation(rockCount: number) {
-    function setShapeMarkers({ shape, left, top }: ActiveShape, setTo: ShapeMarker) {
-    
+    const setShapeMarkers = ({ shape, left, top }: ActiveShape, setTo: ShapeMarker) =>
         shape.forEach((row, rowIndex) => row.forEach((marker, columnIndex) => {
             if(marker === '#') {
                 chamber[rowIndex + top][columnIndex + left] = setTo;
             }
         }));
-    }
     
-    function buildChamberLine(fill: ShapeMarker, edges: ShapeMarker): ShapeMarker[] {
-        return [ edges, ...Array<ShapeMarker>(chamberWidth).fill(fill), edges ];
-    }
-    
-    function getChamberFillLevel() {
-        return chamber.filter(row => row.join('') !== buildChamberLine('.', '|').join('')).length;
-    }
+    const buildChamberLine = (fill: ShapeMarker, edges: ShapeMarker): ShapeMarker[] => [ edges, ...Array<ShapeMarker>(chamberWidth).fill(fill), edges ];
+    const getChamberFillLevel = () => chamber.filter(row => row.join('') !== buildChamberLine('.', '|').join('')).length;
     
     const chamber: ShapeMarker[][] = [buildChamberLine('-', '+')];
     
