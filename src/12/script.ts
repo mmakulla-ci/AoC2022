@@ -1,6 +1,7 @@
 import { readFile } from 'fs/promises';
 import { EOL } from 'os';
 import * as Jimp from 'jimp';
+import { solveDijkstra } from '../util/dijkstra.js';
 
 const START_CHAR = 'S';
 const END_CHAR = 'E';
@@ -39,28 +40,8 @@ function getClimbeableNeighbors({ x, y, height }: HeightMapCell): readonly Heigh
     .filter((cell): cell is HeightMapCell => cell !== undefined && cell.height >= height - 1)
 }
 
-// solve with dijkstra's algorithm
-const distances = new Map<HeightMapCell, number>(allCells.map(cell => [ cell, Infinity ]));
-const predecessors = new Map<HeightMapCell, HeightMapCell | null>(allCells.map(cell => [ cell, null ]));
-const remainingCells = new Set(allCells);
-
 const endCell = allCells.filter(cell => cell.heightChar === END_CHAR)[0];
-distances.set(endCell, 0);
-
-while(remainingCells.size > 0) {
-    const currentCell = [...remainingCells].sort((a, b) => distances.get(a)! - distances.get(b)!).at(0)!;
-    remainingCells.delete(currentCell);
-
-    getClimbeableNeighbors(currentCell)
-        .filter(neighbor => remainingCells.has(neighbor))
-        .forEach(neighbor => {
-            const alternativeDistance = distances.get(currentCell)! + 1;
-            if(alternativeDistance < distances.get(neighbor)!) {
-                distances.set(neighbor, alternativeDistance);
-                predecessors.set(neighbor, currentCell);
-            }
-        });
-}
+const { distances, predecessors } = solveDijkstra(allCells, endCell, cell => getClimbeableNeighbors(cell));
 
 function shortestPathLength(forCells: readonly HeightMapCell[]): number {
     return Math.min(...forCells.map(cell => distances.get(cell)!));
