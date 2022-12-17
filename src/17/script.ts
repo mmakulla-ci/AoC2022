@@ -4,6 +4,7 @@ type Direction = '<' | '>';
 type ShapeMarker = '#' | '.' | '|' | '-' | '+' | '@';
 type Shape = readonly ShapeMarker[][];
 interface ActiveShape { left: number, top: number, readonly shape: Shape };
+interface Cycle { readonly rockCount: number, readonly towerHeight: number }
 
 const ROW: Shape = [
     ['#', '#', '#', '#']
@@ -77,13 +78,18 @@ function runSimulation(rockCount: number) {
     
     let fallingShape = spawnNextShape();
     setShapeMarkers(fallingShape, '@');
-    
+
+    const cycleHashes = new Map<string, Cycle[]>();
+    const getStateHash = () => `${nextDirectionIndex}:${nextShapeIndex}:${chamber.slice(0, 50).map(c => c.join('')).join(':')}`
+
+    let cycleTowerHeight = 0;
+
     let rocksLeft = rockCount;
     while(true) {
-    
+
         const nextDirection = directions[nextDirectionIndex];
         nextDirectionIndex = ++nextDirectionIndex % directions.length;
-    
+
         const getShapeMove = (dx: number, dy: number) => {
             return fallingShape.shape.some((row, rowIndex) => row.some((shapeMarker, columnIndex) =>
                 shapeMarker !== '.' && chamber[fallingShape.top + rowIndex + dy][fallingShape.left + columnIndex + dx] !== '.')) ? 0 : 1;
@@ -104,24 +110,35 @@ function runSimulation(rockCount: number) {
             setShapeMarkers(fallingShape, '#');
     
             rocksLeft--;
+            
+            const recurringHashes = cycleHashes.get(getStateHash()) ?? [];
+            recurringHashes.push({ rockCount: rockCount - rocksLeft, towerHeight: getChamberFillLevel() - 1 });
+            cycleHashes.set(getStateHash(), recurringHashes);
+            
+            if(recurringHashes.length >= 2 && cycleTowerHeight === 0) {
+                const [cycleEnd, cycleStart] = recurringHashes;
+                const cycleRockCount = cycleStart.rockCount - cycleEnd.rockCount;
+                const towerHeight = cycleStart.towerHeight - cycleEnd.towerHeight;
+
+                const cycleCount = Math.floor(rocksLeft / cycleRockCount);
+                
+                cycleTowerHeight = towerHeight * cycleCount;
+                rocksLeft -= cycleCount * cycleRockCount;
+            }
+
             if(rocksLeft === 0) {
                 break;
             }
-    
-            
-            if(rocksLeft % 10000 === 0) {
-                console.log(rocksLeft);
-            }
-    
+
             fallingShape = spawnNextShape();
         }
     
         setShapeMarkers(fallingShape, '@');
     }
 
-    return getChamberFillLevel() - 1
+    return (getChamberFillLevel() - 1) + cycleTowerHeight;
 }
 
 
 console.log('Part 1:', runSimulation(2022));
-//console.log('Part 2:', runSimulation(1000000000000));
+console.log('Part 2:', runSimulation(1000000000000));
