@@ -35,32 +35,43 @@ class Node {
     }
 }
 
-const cyclicList = (await readFile('input.txt'))
-    .toString()
-    .split(EOL)
-    .map(str => parseInt(str))
-    .map<Node>(value => new Node(value, null!, null!));
+async function run(iterations = 1, factor = 1) {
+    const cyclicList = (await readFile('input.txt'))
+        .toString()
+        .split(EOL)
+        .map(str => parseInt(str))
+        .map<Node>(value => new Node(value * factor, null!, null!));
 
-cyclicList.forEach((node, index) => node.previous = cyclicList.at(index - 1)!);
-cyclicList.forEach((node, index) => node.next = cyclicList.at((index + 1) % cyclicList.length)!);
+    cyclicList.forEach((node, index) => node.previous = cyclicList.at(index - 1)!);
+    cyclicList.forEach((node, index) => node.next = cyclicList.at((index + 1) % cyclicList.length)!);
 
-cyclicList.forEach(node => {
-    let { value } = node;
+    while(iterations-- > 0) {
 
-    while(value !== 0) {
-        const { previous, next } = node;
-        node.removeFromChain();
+        cyclicList.forEach(node => {
+            let { value } = node;
+        
+            // skip full circles
+            value = (value % (cyclicList.length - 1));
+        
+            while(value !== 0) {
+                const { previous, next } = node;
 
-        if(value < 0) {
-            node.insertBetween(previous.previous, previous);
-            value++;
-        } else {
-            node.insertBetween(next, next.next);
-            value--;
-        }
+                node.removeFromChain();
+        
+                if(value < 0) {
+                    node.insertBetween(previous.previous, previous);
+                    value++;
+                } else {
+                    node.insertBetween(next, next.next);
+                    value--;
+                }
+            }
+        });
     }
-});
 
+    const nodeZero = cyclicList.filter(node => node.value === 0)[0];
+    return nodeZero.sumValues(1000, 2000, 3000);
+}
 
-const nodeZero = cyclicList.filter(node => node.value === 0)[0];
-console.log('Part 1', nodeZero.sumValues(1000, 2000, 3000));
+console.log('Part 1', await run());
+console.log('Part 2', await run(10, 811589153));
