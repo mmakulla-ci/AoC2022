@@ -46,12 +46,11 @@ async function run(iterations = 1, factor = 1) {
     cyclicList.forEach((node, index) => node.next = cyclicList.at((index + 1) % cyclicList.length)!);
 
     while(iterations-- > 0) {
-
         cyclicList.forEach(node => {
             let { value } = node;
         
             // skip full circles
-            value = (value % (cyclicList.length - 1));
+            value %= cyclicList.length - 1;
         
             while(value !== 0) {
                 const { previous, next } = node;
