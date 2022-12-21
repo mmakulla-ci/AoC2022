@@ -4,23 +4,24 @@ import { EOL } from 'os';
 class NumberMonkey {
     constructor(public readonly name: string, public readonly value: number) {}
 
-    public getResult(): number {
-        return this.value;
+    public getExpression(): string {
+        return `(${this.value})`;
     }
 }
 
 class OperatorMonkey {
     constructor(public readonly name: string, public readonly operation: string) {}
 
-    public getResult(): number {
+    public getExpression(): string {
         const [leftMonkeyName, rightMonkeyName] = this.operation
             .split(/[+|\-|*|/]/g)
-            .map(s => s.trim())
+            .map(s => s.trim());
 
-        const [leftMonkeyValue, rightMonkeyValue] = [leftMonkeyName, rightMonkeyName]
-            .map(name => allMonkeys.get(name)!.getResult());
+        const expression = this.operation
+            .replace(leftMonkeyName, allMonkeys.get(leftMonkeyName)!.getExpression())
+            .replace(rightMonkeyName, allMonkeys.get(rightMonkeyName)!.getExpression());
 
-        return Function(leftMonkeyName, rightMonkeyName, `return ${this.operation}`).call(this, leftMonkeyValue, rightMonkeyValue);
+        return `(${expression})`;
     }
 }
 
@@ -36,4 +37,6 @@ const allMonkeys = new Map((await readFile('input.txt'))
 
 const rootMonkey = allMonkeys.get('root')!;
 
-console.log('Part 1:', rootMonkey.getResult());
+const part1 = Function(`return ${rootMonkey.getExpression()}`).call(null);
+
+console.log('Part 1:', part1);
