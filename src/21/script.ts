@@ -1,27 +1,50 @@
 import { readFile } from 'fs/promises';
 import { EOL } from 'os';
 
-class NumberMonkey {
-    constructor(public readonly name: string, public readonly value: number) {}
+import 'nerdamer/Algebra.js';
+import 'nerdamer/Solve.js';
+import nerdamer from 'nerdamer';
 
-    public getExpression(): string {
-        return `(${this.value})`;
+class NumberMonkey {
+
+    constructor(public readonly name: string, public value: number) {}
+
+    public getExpression(mode: 'solve' | 'withHuman'): string {
+        return mode === 'withHuman' && this.name === 'humn' ? `humn` : this.value.toString();
     }
 }
 
 class OperatorMonkey {
-    constructor(public readonly name: string, public readonly operation: string) {}
+    private readonly leftMonkeyName: string;
+    private readonly rightMonkeyName: string;
 
-    public getExpression(): string {
+    constructor(public readonly name: string, public readonly operation: string) {
         const [leftMonkeyName, rightMonkeyName] = this.operation
             .split(/[+|\-|*|/]/g)
             .map(s => s.trim());
 
+        this.leftMonkeyName = leftMonkeyName;
+        this.rightMonkeyName = rightMonkeyName;
+    }
+
+    public getExpression(mode: 'solve' | 'withHuman'): string {
+
+        const leftMonkey = allMonkeys.get(this.leftMonkeyName)!;
+        const rightMonkey = allMonkeys.get(this.rightMonkeyName)!;
+
+        if(mode === 'withHuman' && this.name === 'root') {
+            return `${leftMonkey.getExpression(mode)} = ${rightMonkey.getExpression(mode)}`;
+        }
+
         const expression = this.operation
-            .replace(leftMonkeyName, allMonkeys.get(leftMonkeyName)!.getExpression())
-            .replace(rightMonkeyName, allMonkeys.get(rightMonkeyName)!.getExpression());
+            .replace(this.leftMonkeyName, leftMonkey.getExpression(mode))
+            .replace(this.rightMonkeyName, rightMonkey.getExpression(mode));
 
         return `(${expression})`;
+    }
+
+    public evalExpression(): number {
+        return Function(`return ${this.getExpression('solve')}`).call(null);
     }
 }
 
@@ -35,8 +58,8 @@ const allMonkeys = new Map((await readFile('input.txt'))
     .map<Monkey>(([name, task, maybeNumber]) => isNaN(maybeNumber) ? new OperatorMonkey(name, task) : new NumberMonkey(name, maybeNumber))
     .map(monkey => [monkey.name, monkey]));
 
-const rootMonkey = allMonkeys.get('root')!;
+const rootMonkey = allMonkeys.get('root')! as OperatorMonkey;
+console.log('Part 1:', rootMonkey.evalExpression());
 
-const part1 = Function(`return ${rootMonkey.getExpression()}`).call(null);
-
-console.log('Part 1:', part1);
+const expression = nerdamer(rootMonkey.getExpression('withHuman'));
+console.log('Part 2:', parseInt(expression.solveFor('humn').toString()));
