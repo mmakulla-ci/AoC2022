@@ -1,15 +1,25 @@
 import { readFile } from 'fs/promises';
 import { EOL } from 'os';
 
-import 'nerdamer/Algebra.js';
-import 'nerdamer/Solve.js';
-import nerdamer from 'nerdamer';
+type Operator = '+' | '-' | '*' | '/';
 
 class NumberMonkey {
     constructor(public readonly name: string, public value: number) {}
 
-    public getExpression(mode: 'solve' | 'withHuman'): string {
-        return mode === 'withHuman' && this.name === 'humn' ? `humn` : this.value.toString();
+    public evaluate(): number {
+        return this.value;
+    }
+
+    public containsHuman(): boolean {
+        return this.name === 'humn';
+    }
+
+    public solveForHuman(): null {
+        return null;
+    }
+
+    public solveForHumanFromHere(): number {
+        return 0;
     }
 }
 
@@ -26,20 +36,54 @@ class OperatorMonkey {
         this.rightMonkeyName = rightMonkeyName;
     }
 
-    public getExpression(mode: 'solve' | 'withHuman'): string {
+    private get subMonkeys(): [Monkey, Monkey] {
+        return [allMonkeys.get(this.leftMonkeyName)!, allMonkeys.get(this.rightMonkeyName)!];
+    }
 
-        const leftMonkey = allMonkeys.get(this.leftMonkeyName)!;
-        const rightMonkey = allMonkeys.get(this.rightMonkeyName)!;
+    private get orderedMonkeys(): { readonly constantMonkey: Monkey, readonly monkeyWithHuman: Monkey } {
+        const [leftMonkey, rightMonkey] = [allMonkeys.get(this.leftMonkeyName)!, allMonkeys.get(this.rightMonkeyName)!];
+        return {
+            constantMonkey: leftMonkey.containsHuman() ? rightMonkey : leftMonkey,
+            monkeyWithHuman: leftMonkey.containsHuman() ? leftMonkey : rightMonkey
+        }
+    }
 
-        if(mode === 'withHuman' && this.name === 'root') {
-            return `${leftMonkey.getExpression(mode)} = ${rightMonkey.getExpression(mode)}`;
+    public containsHuman(): boolean {
+        return this.subMonkeys.some(m => m.containsHuman());
+    }
+
+    public solveForHuman(expressionResult: number): number {
+        const [ firstMonkey ] = this.subMonkeys;
+        const { constantMonkey, monkeyWithHuman } = this.orderedMonkeys;
+
+        const constant = constantMonkey.evaluate();
+        const coeff = firstMonkey.containsHuman() ? -1 : 1;
+        const operator = this.operation.split(' ')[1] as Operator;
+
+        switch(operator) {
+            case '+': expressionResult -= constant; break;
+            case '-': expressionResult = -coeff * expressionResult + constant; break;
+            case '*': expressionResult /= constant; break;
+            case '/': expressionResult /= constant ** coeff; break;
         }
 
-        const expression = this.operation
-            .replace(this.leftMonkeyName, leftMonkey.getExpression(mode))
-            .replace(this.rightMonkeyName, rightMonkey.getExpression(mode));
+        return monkeyWithHuman.solveForHuman(expressionResult) ?? expressionResult;
+    }
 
-        return `(${expression})`;
+    public solveForHumanFromHere(): number {
+        const { constantMonkey, monkeyWithHuman } = this.orderedMonkeys;
+        const constantSide = constantMonkey.evaluate();
+        return monkeyWithHuman.solveForHuman(constantSide) ?? constantSide;
+    }
+
+    public evaluate(): number {
+        const [leftMonkey, rightMonkey] = this.subMonkeys;
+
+        const expression = this.operation
+            .replace(this.leftMonkeyName, leftMonkey.evaluate().toString())
+            .replace(this.rightMonkeyName, rightMonkey.evaluate().toString());
+
+        return Function(`return ${expression}`).call(null);
     }
 }
 
@@ -54,7 +98,5 @@ const allMonkeys = new Map((await readFile('input.txt'))
     .map(monkey => [monkey.name, monkey]));
 
 const rootMonkey = allMonkeys.get('root')!;
-console.log('Part 1:', Function(`return ${rootMonkey.getExpression('solve')}`).call(null));
-
-const expression = nerdamer(rootMonkey.getExpression('withHuman'));
-console.log('Part 2:', parseInt(expression.solveFor('humn').toString()));
+console.log('Part 1:', rootMonkey.evaluate());
+console.log('Part 2:', rootMonkey.solveForHumanFromHere());
