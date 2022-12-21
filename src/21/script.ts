@@ -6,7 +6,6 @@ import 'nerdamer/Solve.js';
 import nerdamer from 'nerdamer';
 
 class NumberMonkey {
-
     constructor(public readonly name: string, public value: number) {}
 
     public getExpression(mode: 'solve' | 'withHuman'): string {
@@ -42,10 +41,6 @@ class OperatorMonkey {
 
         return `(${expression})`;
     }
-
-    public evalExpression(): number {
-        return Function(`return ${this.getExpression('solve')}`).call(null);
-    }
 }
 
 type Monkey = NumberMonkey | OperatorMonkey;
@@ -58,8 +53,8 @@ const allMonkeys = new Map((await readFile('input.txt'))
     .map<Monkey>(([name, task, maybeNumber]) => isNaN(maybeNumber) ? new OperatorMonkey(name, task) : new NumberMonkey(name, maybeNumber))
     .map(monkey => [monkey.name, monkey]));
 
-const rootMonkey = allMonkeys.get('root')! as OperatorMonkey;
-console.log('Part 1:', rootMonkey.evalExpression());
+const rootMonkey = allMonkeys.get('root')!;
+console.log('Part 1:', Function(`return ${rootMonkey.getExpression('solve')}`).call(null));
 
 const expression = nerdamer(rootMonkey.getExpression('withHuman'));
 console.log('Part 2:', parseInt(expression.solveFor('humn').toString()));
